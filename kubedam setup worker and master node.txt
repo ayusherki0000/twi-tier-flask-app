@@ -1,0 +1,51 @@
+###### Configure Master and worker Node in Ec2 insatce ubuntu #########################      Date = 21/09/2024
+
+#below cmd is used for master and worker node 
+
+sudo apt update 
+sudo apt-get install -y apt-transport-https ca-certificates curl
+sudo apt-get install docker.io -y 
+sudo systemctl enable --now docker
+sudo systemctl status docker
+sudo systemctl start docker
+
+
+
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+sudo apt-get update -y
+sudo apt-get install -y kubelet="1.29.0-*" kubectl="1.29.0-*" kubeadm="1.29.0-*"
+sudo systemctl enable --now kubelet
+sudo systemctl start kubelet
+
+sudo kubeadm insatll 
+# add below line to access kubectl 
+ mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+  #in case we get erro for permision denide when we start pod = sudo chmod 644 /home/ubuntu/admin.conf
+  kubectl get nodes 
+
+  
+  
+###### master node cmd 
+
+sudo kubeadm config images pull
+sudo kubeadm init
+
+ # Network Plugin = calico
+mkdir -p "$HOME"/.kube
+sudo cp -i /etc/kubernetes/admin.conf "$HOME"/.kube/config
+sudo chown "$(id -u)":"$(id -g)" "$HOME"/.kube/config
+
+  kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.0/manifests/calico.yaml
+  kubeadm token create --print-join-command
+  
+  ###################worker node cmd 
+
+  sudo kubeadm reset pre-flight checks
+  sudo kubeadm join 172.31.46.131:6443 --token e981ty.xh62icyeavm9f6h4 --discovery-token-ca-cert-hash sha256:ce524cc29849eeaa850a67ad9ed3b44aceb81bfe4cb0d89f2c5afbe1d01bdccc --v=5
+  sudo your-token --v=5
+  #View Control Plane Components:
+  kubectl get pods -n kube-system
